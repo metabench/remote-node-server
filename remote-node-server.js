@@ -27,10 +27,10 @@ var targz = require('tar.gz');
 
 
 var config = require('my-config').init({
-    path : path.resolve('../../config/config.json')//,
-    //env : process.env['NODE_ENV']
-    //env : process.env
-  });
+	path : path.resolve('../../config/config.json')//,
+	//env : process.env['NODE_ENV']
+	//env : process.env
+});
 
 
 
@@ -370,10 +370,6 @@ class Remote_Node_Server extends Remote_Server {
 
 
 
-
-
-
-
 	// Will also want to be able to deploy the same JavaScript / files to multiple servers at once.
 
 
@@ -397,7 +393,7 @@ class Remote_Node_Server extends Remote_Server {
             	if (err) {
             		callback(err);
 				} else {
-            		console.log('res_contents', res_contents);
+            		//console.log('res_contents', res_contents);
 
             		//throw 'stop';
             		// need to look at the names of the files, the last number.
@@ -415,7 +411,7 @@ class Remote_Node_Server extends Remote_Server {
 					}
 
 					var temp_dir_path = path.join(jsgui_temp_path, i_temp_dir + '');
-            		console.log('temp_dir_path', temp_dir_path);
+            		//console.log('temp_dir_path', temp_dir_path);
 
             		var temp_tar_gz_path = path.join(jsgui_temp_path, i_temp_dir + '.tar.gz');
 
@@ -431,10 +427,15 @@ class Remote_Node_Server extends Remote_Server {
 
 
                                     var s_file_name = copied_file_name.split('\\').join('/').split('/');
-                                    console.log('s_file_name', s_file_name);
+                                    //console.log('s_file_name', s_file_name);
                                     // then see if any of them are node_modules.
 
-                                    var res = true;
+									var res = true;
+									
+									// could check against a filter list
+									//  gitignore or similar.
+
+									// Maybe we do want to copy some of these anyway.
 
                                     each(s_file_name, (file_name_part, i) => {
                                         if (file_name_part === 'node_modules') {
@@ -445,22 +446,33 @@ class Remote_Node_Server extends Remote_Server {
                                         }
                                         if (file_name_part === '.idea') {
                                             res = false;
+										}
+										if (file_name_part === '.vscode') {
+                                            res = false;
                                         }
                                         if (file_name_part === '.gitignore') {
                                             res = false;
                                         }
                                         if (file_name_part === '.npmignore') {
                                             res = false;
-                                        }
+										}
+										if (file_name_part === 'DS_Store') {
+                                            res = false;
+										}
+										/*
                                         if (file_name_part === 'LICENSE') {
                                             res = false;
                                         }
                                         if (file_name_part === 'README.md') {
                                             res = false;
+										}
+										*/
+										if (file_name_part === 'package-lock.json') {
+                                            res = false;
                                         }
                                         // .gitignore
                                     });
-                                    console.log('copied_file_name', copied_file_name);
+                                    //console.log('copied_file_name', copied_file_name);
 
                                     return res;
                                 }
@@ -469,7 +481,7 @@ class Remote_Node_Server extends Remote_Server {
                                     console.log('err', err);
 
                                 } else {
-                                    console.log('res_ncp', res_ncp);
+                                    //console.log('res_ncp', res_ncp);
 
                                     var read = targz({
                                         level: 9, // Maximum compression
@@ -508,7 +520,7 @@ class Remote_Node_Server extends Remote_Server {
 
 
 
-												console.log('res_upload', res_upload);
+												//console.log('res_upload', res_upload);
 
 												// option for the deployment directory?
 
@@ -527,13 +539,13 @@ class Remote_Node_Server extends Remote_Server {
                                                     if (err) {
                                                         callback(err);
                                                     } else {
-                                                        console.log('res_bash_command', res_bash_command);
+                                                        //console.log('res_bash_command', res_bash_command);
 
                                                         that.delete_file(remote_archive_path, (err, res_archive_deleted) => {
                                                         	if (err) {
                                                         		callback(err);
 															} else {
-                                                        		console.log('res_archive_deleted', res_archive_deleted);
+                                                        		//console.log('res_archive_deleted', res_archive_deleted);
 
 
                                                         		// delete the local temporary directory and archive.
@@ -542,23 +554,19 @@ class Remote_Node_Server extends Remote_Server {
 																	if (err) {
 																		callback(err);
 																	} else {
-																		console.log('local archive file deleted');
+																		//console.log('local archive file deleted');
 
 																		fs2.delete(temp_dir_path, (err) => {
 																			if (err) {
 																				callback(err);
 																			} else {
-																				console.log('local deployment directory copy of files deleted');
+																				//console.log('local deployment directory copy of files deleted');
 
 																				callback(null, true);
 																			}
 																		})
 																	}
 																});
-
-
-
-
 
 															}
 														})
@@ -602,36 +610,6 @@ class Remote_Node_Server extends Remote_Server {
 			});
 		});
 
-        //
-
-
-		// then need to see the maximum deployment number?
-
-
-
-		// // look at the names of files in the jsgui temp path.
-
-
-
-
-
-		//console.log('tmpdir', tmpdir);
-
-
-
-		// Copy the JavaScript root to that temp directory.
-
-
-		/*
-
-
-		*/
-
-
-
-
-
-
 	}
 
 
@@ -670,10 +648,11 @@ p.ensure_npm_package = p.install_npm_package;
 if (require.main === module) {
 
 	var server_data2 = config.remote_nodes.data2;
+	console.log('server_data2', server_data2);
 
-
-	var remote_node_server = new Remote_Node_Server(server_data2);
-
+	//var remote_node_server = new Remote_Node_Server(server_data2);
+	var remote_node_server = new Remote_Node_Server(config.remote_nodes.data1);
+	
 
 	var get_node_version = () => {
         remote_node_server.get_node_version(function(err, res) {
@@ -693,34 +672,46 @@ if (require.main === module) {
                 throw err;
             } else {
                 var that = this;
-                console.log('res_ensure', res_ensure);
+				console.log('res_ensure', res_ensure);
+				
+				// Would look in the config for the dev path.
 
-                remote_node_server.deploy_javascript_root('D:\\Dropbox\\code\\js', '/var/www/', (err, res_deploy_js) => {
+				// 
+
+				// code_root_path
+				
+
+                remote_node_server.deploy_javascript_root(config.code_root_path, '/var/www/', (err, res_deploy_js) => {
                     if (err) {
                         console.log('err', err);
                     } else {
                         console.log('res_deploy_js', res_deploy_js);
 
                     };
-                });
+				});
+				
+			
             }
         });
 	};
-    //full_deploy();
+    full_deploy();
 
 	// May be able to compile in one place and then deploy the binaries.
 
+	var ver = () => {
+		console.log('pre get node_version');
+		remote_node_server.get_node_version((err, node_version) => {
+			if (err) {
+				throw err;
+			} else {
+				console.log('node_version', node_version);
+				remote_node_server.disconnect();
+			};
+		});
+	}
+	//ver();
 
-
-	console.log('pre get node_version');
-	remote_node_server.get_node_version((err, node_version) => {
-		if (err) {
-			throw err;
-		} else {
-			console.log('node_version', node_version);
-            remote_node_server.disconnect();
-		};
-	});
+	
 
 	// Also want to get various servers running different roles.
 	//  Starting and stopping installed applications will be the way to do this.
@@ -761,27 +752,6 @@ if (require.main === module) {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 	// give it a possible bundle name...?
 
 	// ensure most recent node installation
@@ -792,15 +762,6 @@ if (require.main === module) {
 
 
 	*/
-
-
-
-
-
-
-
-
-
 
 
 
@@ -821,9 +782,6 @@ if (require.main === module) {
 	*/
 
 	// '~/.bash_profile'
-
-
-	/*
 
 	var download_bash_profile = () => {
 		remote_node_server.download('.bash_profile', function(err, profile) {
@@ -862,7 +820,7 @@ if (require.main === module) {
 	};
 	//get_cpuinfo();
 
-	*/
+	
 
 
 
@@ -1043,8 +1001,6 @@ if (require.main === module) {
 
                 // Install modules to that directory with npm (within node_modules)
                 // Upload the tools / modules we are using / are not published on npm.
-
-
 
 
             }
